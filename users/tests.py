@@ -12,12 +12,12 @@ class EmployeeModelTest(TestCase):
 
     def test_employee_creation(self):
         """Проверяем, что сотрудник был успешно создан"""
-        self.assertEqual(self.employee.full_name, "Петр Иванов")
+        self.assertEqual(self.employee.full_name, "Иван Иванов")
         self.assertEqual(self.employee.position, "Менеджер")
 
     def test_employee_str_method(self):
         """Проверяем метод __str__"""
-        self.assertEqual(str(self.employee), "Петр Иванов")
+        self.assertEqual(str(self.employee), "Иван Иванов Менеджер")
 
     def test_employee_position(self):
         """Проверяем, что поле должности верно хранится"""
