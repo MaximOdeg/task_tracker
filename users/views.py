@@ -24,21 +24,25 @@ class EmployeeViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         """Получение списка сотрудников, отсортированных по количеству активных задач"""
 
-        employees = Employee.objects.annotate(
-            active_tasks_count=Count("tasks", filter=Q(tasks__status="In Progress"))
-        ).prefetch_related("tasks").order_by("-active_tasks_count")
+        employees = (
+            Employee.objects.annotate(
+                active_tasks_count=Count("tasks", filter=Q(tasks__status="In Progress"))
+            )
+            .prefetch_related("tasks")
+            .order_by("-active_tasks_count")
+        )
 
         result = []
         for employee in employees:
-            result.append({
-                "full_name": employee.full_name,
-                "active_tasks_count": employee.active_tasks_count,
-                "tasks": [
-                    {
-                        "task_name": task.task_name,
-                        "status": task.status
-                    } for task in employee.tasks.all()
-                ]
-            })
+            result.append(
+                {
+                    "full_name": employee.full_name,
+                    "active_tasks_count": employee.active_tasks_count,
+                    "tasks": [
+                        {"task_name": task.task_name, "status": task.status}
+                        for task in employee.tasks.all()
+                    ],
+                }
+            )
 
         return Response(result)

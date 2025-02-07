@@ -30,7 +30,10 @@ class TaskViewSet(viewsets.ModelViewSet):
             if task.executor is None and task.parent_task is not None:
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             else:
-                return Response({"detail": "Задача не является важной."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"detail": "Задача не является важной."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["get"], url_path="important_tasks")
@@ -43,12 +46,16 @@ class TaskViewSet(viewsets.ModelViewSet):
         result = []
         for task in important_tasks:
             # Получаем всех сотрудников, которые могут взять задачу
-            executors = Employee.objects.filter(tasks__parent_task=task).annotate(
-                task_count=Count("tasks")
-            ).order_by("task_count")
+            executors = (
+                Employee.objects.filter(tasks__parent_task=task)
+                .annotate(task_count=Count("tasks"))
+                .order_by("task_count")
+            )
 
             if not executors.exists():
-                executors = Employee.objects.annotate(task_count=Count("tasks")).order_by("task_count")[:1]
+                executors = Employee.objects.annotate(
+                    task_count=Count("tasks")
+                ).order_by("task_count")[:1]
 
             result.append(
                 {
