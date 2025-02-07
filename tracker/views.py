@@ -1,5 +1,5 @@
 from django.db.models import Count
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
@@ -20,6 +20,20 @@ class TaskViewSet(viewsets.ModelViewSet):
         serializer = TaskSerializer(tasks, many=True)
         return Response(serializer.data)
 
+    @action(detail=False, methods=["post"], url_path="important_tasks")
+    def create_important_task(self, request):
+        """Создание важной задачи"""
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            task = serializer.save()
+            # Проверяем, что задача важная
+            if task.executor is None and task.parent_task is not None:
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            else:
+                return Response({"detail": "Задача не является важной."}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=["get"], url_path="important_tasks")
     def important_tasks(self, request):
         """Получение важных задач"""
         important_tasks = Task.objects.filter(
@@ -28,11 +42,14 @@ class TaskViewSet(viewsets.ModelViewSet):
 
         result = []
         for task in important_tasks:
+            # Получаем всех сотрудников, которые могут взять задачу
             executors = Employee.objects.filter(tasks__parent_task=task).annotate(
                 task_count=Count("tasks")
-            )
-            # Сортируем по количеству задач и выбираем наименее загруженного сотрудника
-            executors = executors.order_by("task_count")[:1]
+            ).order_by("task_count")
+
+            if not executors.exists():
+                executors = Employee.objects.annotate(task_count=Count("tasks")).order_by("task_count")[:1]
+
             result.append(
                 {
                     "task_name": task.task_name,

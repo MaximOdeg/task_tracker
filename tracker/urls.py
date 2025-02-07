@@ -12,5 +12,5 @@ urlpatterns = [
         "employee/<int:employee_id>/",
         TaskViewSet.as_view({"get": "get_tasks_by_employee"}),
     ),
-    path("important_tasks/", TaskViewSet.as_view({"get": "important_tasks"})),
+    path("important_tasks/", TaskViewSet.as_view({"get": "important_tasks", "post": "create_important_task"})),
 ]
